@@ -1,0 +1,31 @@
+# Kernel build trees
+build/
+# ALARM shallow clone (fetch-alarm-sources.sh)
+build/.alarm-pkgbuilds/
+src/
+*.tar.xz
+patch-*.xz
+pkg/
+
+# Pacman output
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+repo/
+aarch64/
+
+# Keys (CI uses secrets)
+keys/*.key
+keys/signing.key
+keys/*.asc
+keys/*.gpg
+keys/*.sec
+keys/private-keys-v1.d/
+!keys/.gitkeep
+
+# Generated merged config
+config/.alarm.config
+config/.config.merged
+local_helpers/
+
+# Logs
+*.log
