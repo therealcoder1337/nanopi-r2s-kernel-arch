@@ -125,8 +125,14 @@ nanopi-r2s-kernel-arch/
 
 - `build-kernel.yml` builds, signs, and publishes GitHub Pages/Releases.
 - `check-kernel.yml` checks ALARM for updates and can trigger a build.
+- Default-branch builds publish production releases and `gh-pages`.
+- Branch builds publish a prerelease and `gh-pages-test` for validation.
 
 ## License
 
-Kernel and driver patches: GPL-2.0-only. Devicetree changes follow the
-upstream file license, GPL-2.0+ OR MIT. Packaging scripts: GPL-2.0-or-later.
+Kernel and driver patches: GPL-2.0-only. Devicetree patch and packaging
+scripts: GPL-2.0-or-later. License texts are included in `LICENSES/`.
+
+Release assets include a source archive. The GitHub Pages pacman directory
+includes `SOURCE_INFO.txt`, `config.merged`, and a link to the matching release
+source archive.
