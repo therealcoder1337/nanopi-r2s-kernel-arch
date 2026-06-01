@@ -51,6 +51,8 @@ cp "$ROOT/config/.config.merged" "$BUILD/config.merged"
 cp "$ROOT/packaging/PKGBUILD" "$ROOT/packaging/linux-nanopi-r2s-minimal.preset" \
     "$ROOT/packaging/linux-nanopi-r2s-minimal.install" \
     "$ROOT/packaging/mkinitcpio.linux-nanopi-r2s-minimal.conf" .
+cp "$ROOT/packaging/r8152-led-config-from-of.patch" \
+    "$ROOT/packaging/rk3328-nanopi-r2s-r8153-led-data.patch" .
 
 # Sync PKGBUILD with the resolved ALARM version.
 sed -i "s/^pkgver=.*/pkgver=${pkgver}/" PKGBUILD
