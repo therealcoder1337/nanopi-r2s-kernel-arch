@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 # NanoPi R2S kernel, aligned with Arch Linux ARM linux-aarch64.
 
 pkgname=linux-nanopi-r2s-minimal
