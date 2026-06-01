@@ -280,3 +280,5 @@ jobs:
           publish_branch: ${{ steps.publish_names.outputs.pages_branch }}
           destination_dir: aarch64
           keep_files: false
+          user_name: therealcoder1337
+          user_email: 78889972+therealcoder1337@users.noreply.github.com
