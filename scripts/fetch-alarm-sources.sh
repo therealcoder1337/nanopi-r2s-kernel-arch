@@ -39,9 +39,12 @@ _srcname="$(awk -F= '/^_srcname=/ { gsub(/"/, "", $2); print $2; exit }' "$PKGBU
 }
 
 cp "$CONFIG" "$ALARM_CONFIG"
+alarm_commit="$(git -C "$ALARM_DIR" rev-parse HEAD)"
 
 cat > "$ALARM_VERSION_FILE" <<EOF
-# ALARM linux-aarch64 at clone $(git -C "$ALARM_DIR" rev-parse --short HEAD)
+# ALARM linux-aarch64 at clone ${alarm_commit}
+alarm_repo=$ALARM_REPO
+alarm_commit=$alarm_commit
 pkgver=$pkgver
 pkgrel=$pkgrel
 _srcname=$_srcname

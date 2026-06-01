@@ -61,7 +61,10 @@ jobs:
               exit 1
             }
             mkdir -p build
+            alarm_commit="$(git -C "$GITHUB_WORKSPACE/build/.alarm-pkgbuilds" rev-parse HEAD 2>/dev/null || true)"
             {
+              echo "alarm_repo=https://github.com/archlinuxarm/PKGBUILDs.git"
+              echo "alarm_commit=$alarm_commit"
               echo "pkgver=$pv"
               echo "pkgrel=$pr"
               echo "_srcname=linux-${_major}.${_minor}"
@@ -73,6 +76,24 @@ jobs:
           echo "pkgrel=$pkgrel" >> "$GITHUB_OUTPUT"
           _major="${pkgver%%.*}"
           echo "major=$_major" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve publish names
+        id: publish_names
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF_NAME" = "${{ github.event.repository.default_branch }}" ]; then
+            tag="linux-nanopi-r2s-minimal-${{ steps.ver.outputs.pkgver }}-${{ steps.ver.outputs.pkgrel }}"
+            echo "pages_branch=gh-pages" >> "$GITHUB_OUTPUT"
+            echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
+            echo "release_title=$tag" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            safe_ref="$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9._-' '-')"
+            echo "pages_branch=gh-pages-test" >> "$GITHUB_OUTPUT"
+            echo "release_tag=test-${safe_ref}-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "release_title=Test build ${safe_ref} #${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Cache kernel sources
         uses: actions/cache@v5
@@ -141,13 +162,55 @@ jobs:
             ccache -s || true
           '
 
+      - name: Prepare source archive
+        run: |
+          set -euo pipefail
+          RELEASE_TAG="${{ steps.publish_names.outputs.release_tag }}" \
+            ./scripts/write-source-info.sh
+
+          # shellcheck source=/dev/null
+          source build/alarm-version.env
+          pkg="linux-nanopi-r2s-minimal-${pkgver}-${pkgrel}"
+          srcroot="build/source/${pkg}"
+
+          rm -rf build/source
+          mkdir -p "$srcroot"/config "$srcroot"/packaging "$srcroot"/scripts "$srcroot"/LICENSES "$srcroot"/sources
+
+          cp README.md "$srcroot/"
+          cp LICENSES/*.txt "$srcroot/LICENSES/"
+          cp config/fragment.r2s config/fragment.prune "$srcroot/config/"
+          cp config/.alarm.config "$srcroot/config/alarm.config"
+          cp build/config.merged "$srcroot/config/config.merged"
+          cp build/PKGBUILD build/linux-nanopi-r2s-minimal.install \
+            build/linux-nanopi-r2s-minimal.preset \
+            build/mkinitcpio.linux-nanopi-r2s-minimal.conf \
+            build/*.patch "$srcroot/packaging/"
+          cp scripts/*.sh "$srcroot/scripts/"
+          cp build/alarm-version.env build/SOURCE_INFO.txt "$srcroot/"
+          cp "build/${_srcname}.tar.xz" "build/patch-${pkgver}.xz" "$srcroot/sources/"
+
+          tar --zstd -cf "build/${pkg}-source.tar.zst" -C build/source "$pkg"
+
       - name: Prepare release files
         run: |
           set -euo pipefail
           PKG_GLOB="$GITHUB_WORKSPACE/build/linux-nanopi-r2s-minimal-*.pkg.tar.zst" \
             REPO_DIR="$GITHUB_WORKSPACE/repo/aarch64" \
             ./scripts/publish-repo.sh
-          cp repo/aarch64/SHA256SUMS build/SHA256SUMS
+          cp build/SOURCE_INFO.txt repo/aarch64/
+          cp build/config.merged repo/aarch64/config.merged
+          mkdir -p repo/aarch64/LICENSES
+          cp LICENSES/*.txt repo/aarch64/LICENSES/
+          (
+            cd repo/aarch64
+            sha256sum linux-nanopi-r2s-minimal-*.pkg.tar.zst \
+              SOURCE_INFO.txt config.merged LICENSES/*.txt > SHA256SUMS
+          )
+          sha256sum build/linux-nanopi-r2s-minimal-*.pkg.tar.zst \
+            build/linux-nanopi-r2s-minimal-*.pkg.tar.zst.sig \
+            build/linux-nanopi-r2s-minimal-*-source.tar.zst \
+            build/SOURCE_INFO.txt build/config.merged LICENSES/*.txt \
+            > build/SHA256SUMS
           [ ! -f keys/nanopi-r2s-kernel-arch.pub ] || cp keys/nanopi-r2s-kernel-arch.pub repo/aarch64/
 
       - name: Upload workflow artifact
@@ -158,17 +221,13 @@ jobs:
           path: |
             build/linux-nanopi-r2s-minimal-*.pkg.tar.zst
             build/linux-nanopi-r2s-minimal-*.pkg.tar.zst.sig
+            build/linux-nanopi-r2s-minimal-*-source.tar.zst
             build/SHA256SUMS
+            build/SOURCE_INFO.txt
+            build/config.merged
+            LICENSES/*.txt
             repo/aarch64/
             keys/nanopi-r2s-kernel-arch.pub
-
-      - name: Deploy pacman repo to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./repo/aarch64
-          destination_dir: aarch64
-          keep_files: false
 
       - name: Create GitHub Release
         working-directory: ${{ github.workspace }}
@@ -176,13 +235,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag="linux-nanopi-r2s-minimal-${{ steps.ver.outputs.pkgver }}-${{ steps.ver.outputs.pkgrel }}"
+          tag="${{ steps.publish_names.outputs.release_tag }}"
           repo="${GITHUB_REPOSITORY:?}"
           sha="${GITHUB_SHA:?}"
           assets=(
             build/linux-nanopi-r2s-minimal-*.pkg.tar.zst
             build/linux-nanopi-r2s-minimal-*.pkg.tar.zst.sig
+            build/linux-nanopi-r2s-minimal-*-source.tar.zst
             build/SHA256SUMS
+            build/SOURCE_INFO.txt
+            build/config.merged
+            LICENSES/*.txt
             keys/nanopi-r2s-kernel-arch.pub
           )
           for asset in "${assets[@]}"; do
@@ -191,6 +254,10 @@ jobs:
               exit 1
             }
           done
+          release_flags=()
+          if [ "${{ steps.publish_names.outputs.prerelease }}" = true ]; then
+            release_flags+=(--prerelease)
+          fi
 
           if gh release view --repo "$repo" "$tag" >/dev/null 2>&1; then
             gh release upload --repo "$repo" "$tag" \
@@ -200,6 +267,16 @@ jobs:
             gh release create --repo "$repo" "$tag" \
               "${assets[@]}" \
               --target "$sha" \
-              --title "$tag" \
-              --notes "Unofficial NanoPi R2S minimal kernel ${tag}. Pacman repo: GitHub Pages /aarch64"
+              "${release_flags[@]}" \
+              --title "${{ steps.publish_names.outputs.release_title }}" \
+              --notes "Unofficial NanoPi R2S minimal kernel ${tag}. Pacman repo: ${{ steps.publish_names.outputs.pages_branch }}/aarch64. Source archive and merged config are included."
           fi
+
+      - name: Deploy pacman repo to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo/aarch64
+          publish_branch: ${{ steps.publish_names.outputs.pages_branch }}
+          destination_dir: aarch64
+          keep_files: false
