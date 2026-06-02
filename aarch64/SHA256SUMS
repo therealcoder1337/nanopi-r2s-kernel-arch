@@ -1,1 +1,5 @@
-8de19cd7f647f2ee73266fb7639f48502893003a3145e9c3a9ce6061266af1a5  linux-nanopi-r2s-minimal-7.0.11-2-aarch64.pkg.tar.zst
+1d696bb6c8c22a1b28ae6990e4cfafa34a36bf8aee545cc9d312bf2fcb4bdaea  linux-nanopi-r2s-minimal-7.0.11-3-aarch64.pkg.tar.zst
+890767733aff0f6b65995ab59307221f9dfc3fd0772a91c6def81e6ad14f6448  SOURCE_INFO.txt
+a3bcb2cbedfa875793cc8d0375495240a2d8b64e7671c75fe2057a9bf0bbfbc6  config.merged
+aaf135472f81c5b4a0dca9367e5bb5e9750032b5bebe5442b36e4c0a47430df3  LICENSES/GPL-2.0-only.txt
+aaf135472f81c5b4a0dca9367e5bb5e9750032b5bebe5442b36e4c0a47430df3  LICENSES/GPL-2.0-or-later.txt
