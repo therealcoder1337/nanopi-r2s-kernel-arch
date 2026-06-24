@@ -3,9 +3,9 @@
 
 pkgname=linux-nanopi-r2s-minimal
 pkgbase=linux-nanopi-r2s-minimal
-pkgver=7.0.9
+pkgver=7.1.1
 pkgrel=1
-_srcname=linux-7.0
+_srcname=linux-7.1
 _desc="NanoPi R2S router profile (ALARM-aligned)"
 arch=('aarch64')
 url="https://github.com/torvalds/linux"

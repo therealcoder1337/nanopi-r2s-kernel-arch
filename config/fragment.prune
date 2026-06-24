@@ -634,7 +634,6 @@ CONFIG_NET_DSA=n
 # MDIO PHY drivers
 # ---------------------------------------------------------------------------
 # Keep Realtek and fixed PHY support for the onboard Ethernet path.
-CONFIG_PHY_PACKAGE=n
 CONFIG_MARVELL_PHY=n
 CONFIG_MARVELL_10G_PHY=n
 CONFIG_MICREL_PHY=n
