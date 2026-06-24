@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       pkgver:
-        description: Kernel pkgver (e.g. 7.0.9)
+        description: Kernel pkgver (e.g. 7.1.1)
         type: string
         default: ''
       pkgrel:
