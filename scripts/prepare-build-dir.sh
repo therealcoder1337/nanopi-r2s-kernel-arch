@@ -37,11 +37,11 @@ kernel_major="${pkgver%%.*}"
 for artifact in "${_srcname}.tar.xz" "patch-${pkgver}.xz"; do
     [ -f "$artifact" ] || curl -fsSL -O "https://www.kernel.org/pub/linux/kernel/v${kernel_major}.x/$artifact"
 done
-if [ ! -d "${_srcname}" ]; then
-    tar -xf "${_srcname}.tar.xz"
-fi
+rm -rf "${_srcname}"
+tar -xf "${_srcname}.tar.xz"
+patch --quiet -d "${_srcname}" -p1 < <(xz -dc "patch-${pkgver}.xz")
 
-echo "==> Merging kernel config..."
+echo "==> Merging kernel config against ${pkgver}..."
 "$ROOT/scripts/merge-config.sh" "$BUILD/$_srcname" "$BUILD/config.merged" "$ALARM_CONFIG"
 "$ROOT/scripts/verify-r2s-config.sh" "$BUILD/config.merged"
 
