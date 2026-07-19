@@ -59,7 +59,7 @@ Build the package:
 ./scripts/build-package.sh
 ```
 
-Output is written to `build/linux-nanopi-r2s-minimal-*.pkg.tar.zst`.
+The package, resolved ALARM config, and merged config are written under `build/`.
 
 Useful environment variables:
 
@@ -73,10 +73,9 @@ Useful environment variables:
 
 ## Test A Local Package
 
-Copy the built package to the NanoPi R2S, then replace the stock kernel:
+Copy the built package to the NanoPi R2S, then install it:
 
 ```bash
-sudo pacman -Rns linux-aarch64
 sudo pacman -U linux-nanopi-r2s-minimal-*.pkg.tar.zst
 sudo reboot
 ```
@@ -115,7 +114,7 @@ It trims broad desktop/peripheral and non-board support: display/GPU/media/sound
 
 ```
 nanopi-r2s-kernel-arch/
-├── config/                 # config fragments and generated merge output
+├── config/                 # kernel config fragments
 ├── packaging/
 ├── scripts/
 └── .github/workflows/
@@ -133,6 +132,6 @@ nanopi-r2s-kernel-arch/
 Kernel and driver patches: GPL-2.0-only. Devicetree patch and packaging
 scripts: GPL-2.0-or-later. License texts are included in `LICENSES/`.
 
-Release assets include a source archive. The GitHub Pages pacman directory
-includes `SOURCE_INFO.txt`, `config.merged`, and a link to the matching release
-source archive.
+Release assets include the standard makepkg source package
+`linux-nanopi-r2s-minimal-<pkgver>-<pkgrel>.src.tar.gz`. The GitHub Pages pacman
+directory includes `SOURCE_INFO.txt`, `config.merged`, and a link to that package.

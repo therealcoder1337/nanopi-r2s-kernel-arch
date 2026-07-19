@@ -12,7 +12,7 @@ url="https://github.com/torvalds/linux"
 license=('GPL-2.0-only')
 depends=('coreutils' 'kmod' 'mkinitcpio>=0.7')
 optdepends=('linux-firmware-realtek: RTL8153 USB Ethernet firmware')
-provides=("linux=${pkgver}" "linux-aarch64=${pkgver}" "KSMBD-MODULE" "WIREGUARD-MODULE")
+provides=("linux=${pkgver}" "linux-aarch64=${pkgver}" "WIREGUARD-MODULE")
 conflicts=('linux' 'linux-aarch64')
 options=('!strip' '!debug')
 install=linux-nanopi-r2s-minimal.install
@@ -43,35 +43,25 @@ _r2s_dtb=rockchip/rk3328-nanopi-r2s.dtb
 _r2s_dtb_path=arch/arm64/boot/dts/${_r2s_dtb}
 
 prepare() {
-    cd "$srcdir"
-    rm -rf "$_srcname"
-    tar -xf "${_srcname}.tar.xz"
     cd "$_srcname"
 
     echo "-${pkgrel}" > localversion.10-pkgrel
     echo "-nanopi-r2s-minimal" > localversion.20-pkgname
 
-    if [[ -f ../patch-${pkgver} ]]; then
-        patch -p1 -N < "../patch-${pkgver}"
-    fi
+    patch -p1 -N < "../patch-${pkgver}"
     patch -p1 -N < "${srcdir}/r8152-led-config-from-of.patch"
     patch -p1 -N < "${srcdir}/rk3328-nanopi-r2s-r8153-led-data.patch"
 
     cp "${srcdir}/config.merged" ./.config
-    make ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" olddefconfig
+    make olddefconfig
 }
 
 build() {
     cd "$_srcname"
-    local _jobs
-    _jobs="${MAKEFLAGS#-j}"
-    [[ "$_jobs" =~ ^[0-9]+$ ]] || _jobs="$(nproc)"
 
-    make ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" -j"$_jobs" \
-        prepare Image modules
-    make ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" -j"$_jobs" \
-        DTC_FLAGS="-@" "$_r2s_dtb"
-    make -s ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" kernelrelease > version
+    make Image modules
+    make DTC_FLAGS="-@" "$_r2s_dtb"
+    make -s kernelrelease > version
 }
 
 package() {
@@ -82,8 +72,8 @@ package() {
 
     install -Dm644 arch/arm64/boot/Image -t "${pkgdir}/boot"
     install -Dm644 "$_r2s_dtb_path" "${pkgdir}/boot/dtbs/${_r2s_dtb}"
-    make INSTALL_MOD_PATH="$pkgdir/usr" ARCH=arm64 CROSS_COMPILE="$CROSS_COMPILE" \
-        INSTALL_MOD_STRIP=1 DEPMOD=/doesnt/exist modules_install
+    make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
+        DEPMOD=/doesnt/exist modules_install
     rm -f "$modulesdir"/build
 
     local _subst="

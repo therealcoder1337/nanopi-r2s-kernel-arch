@@ -4,7 +4,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="$ROOT/build"
-REPO_DIR="$ROOT/repo/aarch64"
 
 export ARCH=arm64
 export CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}"
@@ -27,13 +26,12 @@ fi
 
 # Cross-build on x86_64: set CARCH=aarch64 so package metadata is correct.
 # -s needs root for pacman syncdeps.
-MAKEPKG_FLAGS=(-rf)
+MAKEPKG_FLAGS=(-Crf)
 if [ "${MAKEPKG_SYNCDEPS:-0}" = 1 ]; then
-    MAKEPKG_FLAGS=(-srf)
+    MAKEPKG_FLAGS=(-Csrf)
 fi
 
 if [ -n "${PACMAN_KEY_ID:-}" ]; then
-    export PACMAN_DB_EXT='.db.tar.gz'
     makepkg "${MAKEPKG_FLAGS[@]}" --sign --key "$PACMAN_KEY_ID"
 else
     echo "Note: building unsigned (set PACMAN_KEY_PATH or PACMAN_KEY_ID for signing)"
@@ -41,8 +39,7 @@ else
 fi
 
 if [ "${PUBLISH_REPO:-0}" = 1 ]; then
-    PKG_GLOB="$BUILD/linux-nanopi-r2s-minimal-"*.pkg.tar.zst REPO_DIR="$REPO_DIR" \
-        "$ROOT/scripts/publish-repo.sh"
+    "$ROOT/scripts/publish-repo.sh"
 fi
 
 # Print the public key path when a signing key was exported.

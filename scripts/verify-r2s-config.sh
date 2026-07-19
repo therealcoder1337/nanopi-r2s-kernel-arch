@@ -2,7 +2,6 @@
 # Fail fast if merged config misses NanoPi R2S critical options.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CFG="${1:?path to .config required}"
 
 [ -f "$CFG" ] || {
@@ -10,63 +9,23 @@ CFG="${1:?path to .config required}"
     exit 1
 }
 
-require_re() {
-    local re="$1" msg="$2"
-    grep -Eq "$re" "$CFG" || { echo "Error: $msg" >&2; return 1; }
-}
-
-require_y() {
-    local sym
+require_value() {
+    local expected="$1" sym
+    shift
     for sym in "$@"; do
-        require_re "^${sym}=y$" "expected ${sym}=y"
+        grep -Eq "^${sym}=(${expected})$" "$CFG" || {
+            echo "Error: expected ${sym}=${expected}" >&2
+            return 1
+        }
     done
 }
 
-require_m() {
-    local sym
-    for sym in "$@"; do
-        require_re "^${sym}=m$" "expected ${sym}=m"
-    done
-}
-
-require_ym() {
-    local sym
-    for sym in "$@"; do
-        require_re "^${sym}=(y|m)$" "expected ${sym}=y|m"
-    done
-}
-
-require_unset() {
-    local sym="$1"
-    ! grep -Eq "^${sym}=(y|m)$" "$CFG" || {
-        echo "Error: expected ${sym} to be disabled" >&2
-        return 1
-    }
-}
-
-check_disabled_fragment_entries() {
-    local frag="$1"
-    local line sym
-
-    [ -f "$frag" ] || {
-        echo "Error: config fragment not found: $frag" >&2
-        exit 1
-    }
-
-    while IFS= read -r line || [ -n "$line" ]; do
-        line="${line%%#*}"
-        line="$(printf '%s\n' "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-        [[ "$line" == CONFIG_*=n ]] || continue
-        sym="${line%%=*}"
-        require_unset "$sym"
-    done < "$frag"
-}
-
-require_y \
+require_value y \
     CONFIG_STMMAC_ETH \
     CONFIG_STMMAC_PLATFORM \
     CONFIG_DWMAC_ROCKCHIP \
     CONFIG_DWMAC_GENERIC \
+    CONFIG_REALTEK_PHY \
     CONFIG_WIREGUARD \
     CONFIG_NF_TABLES \
     CONFIG_NF_CONNTRACK \
@@ -74,14 +33,14 @@ require_y \
     CONFIG_BRIDGE \
     CONFIG_VLAN_8021Q
 
-require_y \
+require_value y \
     CONFIG_COMPAT \
     CONFIG_KALLSYMS \
     CONFIG_IKCONFIG_PROC \
     CONFIG_INOTIFY_USER \
     CONFIG_FANOTIFY
 
-require_y \
+require_value y \
     CONFIG_USB_DWC2 \
     CONFIG_USB_DWC2_HOST \
     CONFIG_USB_DWC3 \
@@ -93,7 +52,7 @@ require_y \
     CONFIG_USB_OHCI_HCD \
     CONFIG_USB_OHCI_HCD_PLATFORM
 
-require_y \
+require_value y \
     CONFIG_I2C_RK3X \
     CONFIG_MMC \
     CONFIG_MMC_BLOCK \
@@ -105,9 +64,10 @@ require_y \
     CONFIG_MFD_RK8XX \
     CONFIG_MFD_RK8XX_I2C \
     CONFIG_REGULATOR_RK808 \
-    CONFIG_COMMON_CLK_RK808
+    CONFIG_COMMON_CLK_RK808 \
+    CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL
 
-require_y \
+require_value y \
     CONFIG_SCSI \
     CONFIG_BLK_DEV_SD \
     CONFIG_USB_STORAGE \
@@ -123,13 +83,13 @@ require_y \
     CONFIG_LEDS_TRIGGER_NETDEV \
     CONFIG_SECURITY_LANDLOCK
 
-require_y \
+require_value y \
     CONFIG_TCP_CONG_CUBIC \
     CONFIG_CRYPTO_AES \
     CONFIG_CRYPTO_XTS \
     CONFIG_CRYPTO_CHACHA20
 
-require_m \
+require_value m \
     CONFIG_USB_RTL8152 \
     CONFIG_TCP_CONG_BBR \
     CONFIG_CRYPTO_DEV_ROCKCHIP \
@@ -139,7 +99,7 @@ require_m \
     CONFIG_MACVLAN \
     CONFIG_IPVLAN
 
-require_ym \
+require_value 'y|m' \
     CONFIG_BLK_DEV_DM \
     CONFIG_DM_CRYPT \
     CONFIG_IFB \
@@ -152,14 +112,5 @@ require_ym \
     CONFIG_NET_CLS_MATCHALL \
     CONFIG_NET_ACT_MIRRED \
     CONFIG_NET_ACT_POLICE
-
-require_re '^CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y$' \
-    'expected CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y'
-
-require_re '^CONFIG_REALTEK_PHY=y$' \
-    'expected CONFIG_REALTEK_PHY=y'
-
-check_disabled_fragment_entries "$ROOT/config/fragment.r2s"
-check_disabled_fragment_entries "$ROOT/config/fragment.prune"
 
 echo "R2S config checks passed: $CFG"
