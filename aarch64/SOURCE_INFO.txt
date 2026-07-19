@@ -1,14 +1,14 @@
-Package: linux-nanopi-r2s-minimal-7.1.3-2
+Package: linux-nanopi-r2s-minimal-7.1.4-1
 Repository: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch
 Repository commit: unknown
 ALARM PKGBUILDs: https://github.com/archlinuxarm/PKGBUILDs.git
-ALARM commit: 98fccbbe726d205e42f0de1ba305396134739234
-Release tag: linux-nanopi-r2s-minimal-7.1.3-2
-Source archive: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch/releases/download/linux-nanopi-r2s-minimal-7.1.3-2/linux-nanopi-r2s-minimal-7.1.3-2-source.tar.zst
+ALARM commit: 411a535dc1f166dfb62b7cc795b55f16ad73a83a
+Release tag: linux-nanopi-r2s-minimal-7.1.4-1
+Source archive: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch/releases/download/linux-nanopi-r2s-minimal-7.1.4-1/linux-nanopi-r2s-minimal-7.1.4-1-source.tar.zst
 
 Source archive contents:
 - sources/linux-7.1.tar.xz
-- sources/patch-7.1.3.xz
+- sources/patch-7.1.4.xz
 - config/alarm.config
 - config/config.merged
 - config/fragment.r2s
