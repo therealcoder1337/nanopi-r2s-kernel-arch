@@ -7,11 +7,21 @@
 CONFIG_LOCALVERSION=""
 
 # ---------------------------------------------------------------------------
+# RK3328 CPU
+# ---------------------------------------------------------------------------
+CONFIG_NR_CPUS=4
+CONFIG_ARM64_ERRATUM_826319=y
+CONFIG_ARM64_ERRATUM_827319=y
+CONFIG_ARM64_ERRATUM_824069=y
+CONFIG_ARM64_ERRATUM_819472=y
+CONFIG_ARM64_ERRATUM_845719=y
+CONFIG_ARM64_ERRATUM_843419=y
+
+# ---------------------------------------------------------------------------
 # Ethernet and router datapath
 # ---------------------------------------------------------------------------
 CONFIG_STMMAC_ETH=y
 CONFIG_STMMAC_PLATFORM=y
-CONFIG_DWMAC_GENERIC=y
 CONFIG_DWMAC_ROCKCHIP=y
 # Keep the internal RTL8153 LAN driver modular so its firmware is available from rootfs.
 CONFIG_USB_RTL8152=m
@@ -61,13 +71,31 @@ CONFIG_RTC_DRV_RK808=m
 CONFIG_RTC_DRV_HYM8563=m
 
 # ---------------------------------------------------------------------------
-# LEDs and CPU frequency
+# Debug UART
 # ---------------------------------------------------------------------------
+CONFIG_SERIAL_8250_NR_UARTS=4
+
+# ---------------------------------------------------------------------------
+# LEDs, reset button, and CPU power management
+# ---------------------------------------------------------------------------
+CONFIG_GPIOLIB=y
+CONFIG_GPIO_CDEV=y
+CONFIG_GPIO_ROCKCHIP=y
 CONFIG_LEDS_GPIO=y
 CONFIG_LEDS_TRIGGER_NETDEV=y
+CONFIG_INPUT=y
+CONFIG_INPUT_EVDEV=y
+CONFIG_INPUT_KEYBOARD=y
+CONFIG_KEYBOARD_GPIO=m
+CONFIG_CPU_IDLE=y
+CONFIG_CPU_IDLE_GOV_MENU=y
+CONFIG_ARM_PSCI_CPUIDLE=y
+CONFIG_CPU_FREQ=y
 CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y
 CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y
 CONFIG_CPU_FREQ_GOV_PERFORMANCE=y
+CONFIG_CPU_THERMAL=y
+CONFIG_CPU_FREQ_THERMAL=y
 
 # ---------------------------------------------------------------------------
 # Locales and userspace compatibility
