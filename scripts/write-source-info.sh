@@ -7,46 +7,31 @@ BUILD="${BUILD:-$ROOT/build}"
 OUT="${1:-$BUILD/SOURCE_INFO.txt}"
 ALARM_VERSION_FILE="${ALARM_VERSION_FILE:-$BUILD/alarm-version.env}"
 
-pkgver=unknown
-pkgrel=unknown
-_srcname=unknown
-alarm_repo="${ALARM_REPO:-https://github.com/archlinuxarm/PKGBUILDs.git}"
-alarm_commit=unknown
-release_tag="${RELEASE_TAG:-unknown}"
+[ -f "$ALARM_VERSION_FILE" ] || {
+    echo "Error: missing version metadata: $ALARM_VERSION_FILE" >&2
+    exit 1
+}
+: "${RELEASE_TAG:?RELEASE_TAG is required}"
 
-if [ -f "$ALARM_VERSION_FILE" ]; then
-    # shellcheck source=/dev/null
-    source "$ALARM_VERSION_FILE"
-fi
+# shellcheck source=/dev/null
+source "$ALARM_VERSION_FILE"
 
-repo_url="$(git -C "$ROOT" config --get remote.origin.url 2>/dev/null || echo https://github.com/therealcoder1337/nanopi-r2s-kernel-arch)"
-repo_commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+repo_commit="${GITHUB_SHA:-$(git -C "$ROOT" rev-parse HEAD)}"
 repo_web_url="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-therealcoder1337/nanopi-r2s-kernel-arch}"
-source_archive="linux-nanopi-r2s-minimal-${pkgver}-${pkgrel}-source.tar.zst"
+source_package="linux-nanopi-r2s-minimal-${pkgver}-${pkgrel}.src.tar.gz"
 
 mkdir -p "$(dirname "$OUT")"
 cat > "$OUT" <<EOF
 Package: linux-nanopi-r2s-minimal-${pkgver}-${pkgrel}
-Repository: ${repo_url}
+Repository: ${repo_web_url}
 Repository commit: ${repo_commit}
 ALARM PKGBUILDs: ${alarm_repo}
 ALARM commit: ${alarm_commit}
-Release tag: ${release_tag}
-Source archive: ${repo_web_url}/releases/download/${release_tag}/${source_archive}
-
-Source archive contents:
-- sources/${_srcname}.tar.xz
-- sources/patch-${pkgver}.xz
-- config/alarm.config
-- config/config.merged
-- config/fragment.r2s
-- config/fragment.prune
-- packaging/
-- scripts/
-- LICENSES/
+Release tag: ${RELEASE_TAG}
+Source package: ${repo_web_url}/releases/download/${RELEASE_TAG}/${source_package}
 
 Rebuild command
-  ./scripts/build-package.sh
+  CARCH=aarch64 makepkg -Cfs
 EOF
 
 echo "Source info written to $OUT"

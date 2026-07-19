@@ -5,8 +5,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 KDIR="${1:?kernel source directory required}"
-OUT="${2:-$ROOT/config/.config.merged}"
-BASE="${3:-$ROOT/config/.alarm.config}"
+OUT="${2:-$ROOT/build/config.merged}"
+BASE="${3:-$ROOT/build/alarm.config}"
 
 FRAGMENTS=(
     "$ROOT/config/fragment.r2s"
@@ -24,7 +24,7 @@ for frag in "${FRAGMENTS[@]}"; do
     }
 done
 [ -x "$KDIR/scripts/config" ] || {
-    echo "Error: $KDIR/scripts/config not found (run make prepare first?)" >&2
+    echo "Error: $KDIR/scripts/config not found" >&2
     exit 1
 }
 
@@ -36,7 +36,7 @@ declare -A EXPECTED_VAL
 
 apply_fragment() {
     local frag="$1"
-    local key val
+    local key val sym
     echo "==> Applying $(basename "$frag")..."
     while IFS= read -r line || [ -n "$line" ]; do
         line="${line%%#*}"
@@ -71,7 +71,7 @@ for key in "${!EXPECTED_VAL[@]}"; do
         fi
         continue
     fi
-    if ! grep -q "^${key}=${val}$" "$KDIR/.config"; then
+    if ! grep -Fqx "${key}=${val}" "$KDIR/.config"; then
         echo "Error: ${key}=${val} not present after olddefconfig (missing/renamed?)" >&2
         error_count=$((error_count + 1))
     fi

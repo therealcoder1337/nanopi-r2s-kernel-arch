@@ -56,9 +56,9 @@ jobs:
           count="$(gh run list \
             --repo "${{ github.repository }}" \
             --workflow build-kernel.yml \
-            --status in_progress \
-            --json databaseId \
-            --jq 'length')"
+            --limit 100 \
+            --json status \
+            --jq '[.[] | select(.status != "completed")] | length')"
           echo "count=$count" >> "$GITHUB_OUTPUT"
           [ "$count" -eq 0 ] && echo "busy=false" >> "$GITHUB_OUTPUT" || echo "busy=true" >> "$GITHUB_OUTPUT"
 

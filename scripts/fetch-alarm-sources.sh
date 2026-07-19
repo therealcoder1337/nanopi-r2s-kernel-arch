@@ -5,19 +5,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="$ROOT/build"
 ALARM_REPO="${ALARM_REPO:-https://github.com/archlinuxarm/PKGBUILDs.git}"
-ALARM_DIR="${ALARM_DIR:-$BUILD/.alarm-pkgbuilds}"
 LINUX_PKGDIR="core/linux-aarch64"
-ALARM_CONFIG="$ROOT/config/.alarm.config"
+ALARM_CONFIG="$BUILD/alarm.config"
 ALARM_VERSION_FILE="${ALARM_VERSION_FILE:-$BUILD/alarm-version.env}"
+ALARM_DIR="$(mktemp -d)"
 
-command -v git >/dev/null 2>&1 || {
-    echo "Error: git not found" >&2
-    exit 1
-}
+trap 'rm -rf "$ALARM_DIR"' EXIT
 
 echo "==> Fetching ALARM PKGBUILDs (shallow clone)..."
 mkdir -p "$BUILD" "$(dirname "$ALARM_VERSION_FILE")"
-rm -rf "$ALARM_DIR"
 git clone --depth=1 "$ALARM_REPO" "$ALARM_DIR"
 
 LINUX_DIR="$ALARM_DIR/$LINUX_PKGDIR"
@@ -41,14 +37,14 @@ _srcname="$(awk -F= '/^_srcname=/ { gsub(/"/, "", $2); print $2; exit }' "$PKGBU
 cp "$CONFIG" "$ALARM_CONFIG"
 alarm_commit="$(git -C "$ALARM_DIR" rev-parse HEAD)"
 
-cat > "$ALARM_VERSION_FILE" <<EOF
-# ALARM linux-aarch64 at clone ${alarm_commit}
-alarm_repo=$ALARM_REPO
-alarm_commit=$alarm_commit
-pkgver=$pkgver
-pkgrel=$pkgrel
-_srcname=$_srcname
-EOF
+{
+    printf '# ALARM linux-aarch64 at clone %s\n' "$alarm_commit"
+    printf 'alarm_repo=%q\n' "$ALARM_REPO"
+    printf 'alarm_commit=%q\n' "$alarm_commit"
+    printf 'pkgver=%q\n' "$pkgver"
+    printf 'pkgrel=%q\n' "$pkgrel"
+    printf '_srcname=%q\n' "$_srcname"
+} > "$ALARM_VERSION_FILE"
 
 echo "    ALARM version: ${pkgver}-${pkgrel} ($_srcname) -> $ALARM_VERSION_FILE"
 echo "    ALARM config: $(wc -l < "$ALARM_CONFIG") lines → $ALARM_CONFIG"

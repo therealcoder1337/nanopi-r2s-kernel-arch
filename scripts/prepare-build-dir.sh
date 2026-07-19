@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="$ROOT/build"
-ALARM_CONFIG="$ROOT/config/.alarm.config"
+ALARM_CONFIG="$BUILD/alarm.config"
 ALARM_VERSION_FILE="${ALARM_VERSION_FILE:-$BUILD/alarm-version.env}"
 
 mkdir -p "$BUILD"
@@ -40,13 +40,10 @@ done
 if [ ! -d "${_srcname}" ]; then
     tar -xf "${_srcname}.tar.xz"
 fi
-[ -f "patch-${pkgver}" ] || xz -dk "patch-${pkgver}.xz"
 
 echo "==> Merging kernel config..."
-"$ROOT/scripts/merge-config.sh" "$BUILD/$_srcname" "$ROOT/config/.config.merged" "$ALARM_CONFIG"
-"$ROOT/scripts/verify-r2s-config.sh" "$ROOT/config/.config.merged"
-make -C "$_srcname" ARCH=arm64 CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}" prepare >/dev/null
-cp "$ROOT/config/.config.merged" "$BUILD/config.merged"
+"$ROOT/scripts/merge-config.sh" "$BUILD/$_srcname" "$BUILD/config.merged" "$ALARM_CONFIG"
+"$ROOT/scripts/verify-r2s-config.sh" "$BUILD/config.merged"
 
 cp "$ROOT/packaging/PKGBUILD" "$ROOT/packaging/linux-nanopi-r2s-minimal.preset" \
     "$ROOT/packaging/linux-nanopi-r2s-minimal.install" \
