@@ -1,10 +1,10 @@
-Package: linux-nanopi-r2s-minimal-7.1.3-2
+Package: linux-nanopi-r2s-minimal-7.1.4-1
 Repository: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch
-Repository commit: f5e8f1264a723a90ccdd56728c8f6a5a8043d08f
+Repository commit: a0c2b1de41c0b66e01b62b7bffe254be02e6b845
 ALARM PKGBUILDs: https://github.com/archlinuxarm/PKGBUILDs.git
-ALARM commit: 83e004078150877ecc88e7c727059e0842299bb3
-Release tag: test-refactor-build-and-ci-optimization-19
-Source package: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch/releases/download/test-refactor-build-and-ci-optimization-19/linux-nanopi-r2s-minimal-7.1.3-2.src.tar.gz
+ALARM commit: 43f0658a586727f5fbe3b7018831395874df5dc3
+Release tag: test-perf-r2s-kernel-trims-21
+Source package: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch/releases/download/test-perf-r2s-kernel-trims-21/linux-nanopi-r2s-minimal-7.1.4-1.src.tar.gz
 
 Rebuild command
   CARCH=aarch64 makepkg -Cfs
