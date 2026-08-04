@@ -1,10 +1,10 @@
-Package: linux-nanopi-r2s-minimal-7.1.5-2
+Package: linux-nanopi-r2s-minimal-7.1.6-1
 Repository: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch
 Repository commit: dffbdd9d8363e1c5cef434d38aca370aad94ba8f
 ALARM PKGBUILDs: https://github.com/archlinuxarm/PKGBUILDs.git
-ALARM commit: dbaced68041e6a8c01c0b71d8aeae64d6e228998
-Release tag: linux-nanopi-r2s-minimal-7.1.5-2
-Source package: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch/releases/download/linux-nanopi-r2s-minimal-7.1.5-2/linux-nanopi-r2s-minimal-7.1.5-2.src.tar.gz
+ALARM commit: ffbcfef5d2cf10de41858fc79aa6cc0949e6cc74
+Release tag: linux-nanopi-r2s-minimal-7.1.6-1
+Source package: https://github.com/therealcoder1337/nanopi-r2s-kernel-arch/releases/download/linux-nanopi-r2s-minimal-7.1.6-1/linux-nanopi-r2s-minimal-7.1.6-1.src.tar.gz
 
 Rebuild command
   CARCH=aarch64 makepkg -Cfs
