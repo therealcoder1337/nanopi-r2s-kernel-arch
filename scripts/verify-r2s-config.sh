@@ -119,9 +119,14 @@ require_value y \
 
 require_value y \
     CONFIG_TCP_CONG_CUBIC \
+    CONFIG_SWAP \
     CONFIG_CRYPTO_AES \
     CONFIG_CRYPTO_XTS \
-    CONFIG_CRYPTO_CHACHA20
+    CONFIG_CRYPTO_CHACHA20 \
+    CONFIG_ZRAM_BACKEND_LZO \
+    CONFIG_ZRAM_DEF_COMP_LZORLE
+
+require_value '"lzo-rle"' CONFIG_ZRAM_DEF_COMP
 
 require_value m \
     CONFIG_USB_RTL8152 \
@@ -133,7 +138,11 @@ require_value m \
     CONFIG_TUN \
     CONFIG_VETH \
     CONFIG_MACVLAN \
-    CONFIG_IPVLAN
+    CONFIG_IPVLAN \
+    CONFIG_ZRAM \
+    CONFIG_ZSMALLOC \
+    CONFIG_LZO_COMPRESS \
+    CONFIG_LZO_DECOMPRESS
 
 require_value 'y|m' \
     CONFIG_BLK_DEV_DM \
