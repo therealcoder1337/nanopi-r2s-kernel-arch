@@ -59,7 +59,6 @@ jobs:
             --limit 100 \
             --json status \
             --jq '[.[] | select(.status != "completed")] | length')"
-          echo "count=$count" >> "$GITHUB_OUTPUT"
           [ "$count" -eq 0 ] && echo "busy=false" >> "$GITHUB_OUTPUT" || echo "busy=true" >> "$GITHUB_OUTPUT"
 
       - name: Check latest completed kernel build
@@ -75,7 +74,6 @@ jobs:
             --limit 1 \
             --json conclusion \
             --jq '.[0].conclusion // "none"')"
-          echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
           case "$conclusion" in
             failure|cancelled|timed_out|action_required) echo "blocked=true" >> "$GITHUB_OUTPUT" ;;
             *) echo "blocked=false" >> "$GITHUB_OUTPUT" ;;

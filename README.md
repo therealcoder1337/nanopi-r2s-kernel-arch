@@ -50,7 +50,7 @@ Install the Arch build dependencies:
 ```bash
 sudo pacman -S --needed base-devel coreutils kmod mkinitcpio \
   aarch64-linux-gnu-gcc aarch64-linux-gnu-binutils \
-  bc dtc git python pacman-contrib curl xz openssl libelf
+  bc dtc git python curl xz openssl libelf
 ```
 
 Build the package:
@@ -122,10 +122,12 @@ nanopi-r2s-kernel-arch/
 
 ## CI
 
-- `build-kernel.yml` builds, signs, and publishes GitHub Pages/Releases.
+- `build-kernel.yml` builds and signs kernel packages and publishes GitHub Releases.
 - `check-kernel.yml` checks ALARM for updates and can trigger a build.
-- Default-branch builds publish production releases and `gh-pages`.
-- Branch builds publish a prerelease and `gh-pages-test` for validation.
+- Default-branch builds also deploy the pacman repository through a GitHub Pages artifact.
+- Branch builds publish a prerelease and workflow artifact for validation without deploying GitHub Pages.
+
+GitHub Pages must use the GitHub Actions source, and the `github-pages` environment must allow the default branch.
 
 ## License
 
