@@ -15,7 +15,7 @@ if [ "${#pkgs[@]}" -eq 0 ]; then
 fi
 
 if ! command -v repo-add >/dev/null 2>&1; then
-    echo "Error: repo-add not found (install pacman-contrib)" >&2
+    echo "Error: repo-add not found (install pacman)" >&2
     exit 1
 fi
 

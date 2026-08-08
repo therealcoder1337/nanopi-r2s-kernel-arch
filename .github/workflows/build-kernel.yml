@@ -12,9 +12,6 @@ on:
         type: string
         default: '1'
 
-permissions:
-  contents: write
-
 concurrency:
   group: build-kernel
   cancel-in-progress: false
@@ -25,12 +22,19 @@ defaults:
 
 jobs:
   build:
+    outputs:
+      artifact_name: ${{ steps.release.outputs.artifact_name }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+      release_title: ${{ steps.release.outputs.release_title }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -43,7 +47,7 @@ jobs:
             bc dtc python \
             git curl xz \
             openssl libelf \
-            pacman-contrib gnupg ccache github-cli
+            gnupg ccache
 
       - name: Fetch ALARM metadata
         run: ./scripts/fetch-alarm-sources.sh
@@ -89,26 +93,29 @@ jobs:
           echo "pkgrel=$pkgrel" >> "$GITHUB_OUTPUT"
           echo "series=${_srcname#linux-}" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve publish names
-        id: publish_names
+      - name: Resolve release names
+        id: release
         run: |
           set -euo pipefail
           if [ "$GITHUB_REF_NAME" = "${{ github.event.repository.default_branch }}" ]; then
             tag="linux-nanopi-r2s-minimal-${{ steps.ver.outputs.pkgver }}-${{ steps.ver.outputs.pkgrel }}"
-            echo "pages_branch=gh-pages" >> "$GITHUB_OUTPUT"
-            echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
-            echo "release_title=$tag" >> "$GITHUB_OUTPUT"
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            title="$tag"
+            prerelease=false
           else
             safe_ref="$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9._-' '-')"
-            echo "pages_branch=gh-pages-test" >> "$GITHUB_OUTPUT"
-            echo "release_tag=test-${safe_ref}-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-            echo "release_title=Test build ${safe_ref} #${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            tag="test-${safe_ref}-${GITHUB_RUN_NUMBER}"
+            title="Test build ${safe_ref} #${GITHUB_RUN_NUMBER}"
+            prerelease=true
           fi
+          {
+            echo "artifact_name=linux-nanopi-r2s-minimal-${{ steps.ver.outputs.pkgver }}-${{ steps.ver.outputs.pkgrel }}"
+            echo "release_tag=$tag"
+            echo "release_title=$title"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Cache kernel sources
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             build/linux-${{ steps.ver.outputs.series }}.tar.xz
@@ -118,7 +125,7 @@ jobs:
             kernel-src-linux-${{ steps.ver.outputs.series }}-
 
       - name: Cache compiler artifacts (ccache)
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /github/home/.ccache
           key: ccache-aarch64-minimal-linux-${{ steps.ver.outputs.series }}-${{ steps.ver.outputs.pkgver }}-${{ hashFiles('build/alarm.config', 'config/fragment.*', 'packaging/PKGBUILD', 'packaging/*.patch', 'scripts/merge-config.sh', 'scripts/prepare-build-dir.sh') }}
@@ -175,7 +182,7 @@ jobs:
 
       - name: Write source metadata
         run: |
-          RELEASE_TAG="${{ steps.publish_names.outputs.release_tag }}" \
+          RELEASE_TAG="${{ steps.release.outputs.release_tag }}" \
             ./scripts/write-source-info.sh
 
       - name: Prepare release files
@@ -201,7 +208,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: linux-nanopi-r2s-minimal-${{ steps.ver.outputs.pkgver }}-${{ steps.ver.outputs.pkgrel }}
+          name: ${{ steps.release.outputs.artifact_name }}
           if-no-files-found: error
           path: |
             build/linux-nanopi-r2s-minimal-*.pkg.tar.zst
@@ -214,13 +221,52 @@ jobs:
             repo/aarch64/
             keys/nanopi-r2s-kernel-arch.pub
 
+      - name: Upload pacman repo for GitHub Pages
+        if: github.ref_name == github.event.repository.default_branch
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./repo
+
+  deploy_pages:
+    if: github.ref_name == github.event.repository.default_branch
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy pacman repo to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  publish_release:
+    if: >-
+      always() &&
+      needs.build.result == 'success' &&
+      (github.ref_name != github.event.repository.default_branch ||
+      needs.deploy_pages.result == 'success')
+    needs:
+      - build
+      - deploy_pages
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+
       - name: Create GitHub Release
-        working-directory: ${{ github.workspace }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag="${{ steps.publish_names.outputs.release_tag }}"
+          tag="${{ needs.build.outputs.release_tag }}"
+          title="${{ needs.build.outputs.release_title }}"
           repo="${GITHUB_REPOSITORY:?}"
           sha="${GITHUB_SHA:?}"
           assets=(
@@ -240,30 +286,25 @@ jobs:
             }
           done
           release_flags=()
-          if [ "${{ steps.publish_names.outputs.prerelease }}" = true ]; then
+          if [ "${{ needs.build.outputs.prerelease }}" = true ]; then
             release_flags+=(--prerelease)
+            notes="Unofficial NanoPi R2S minimal kernel ${tag} validation build. This branch build does not deploy the pacman repository. Source package and merged config are included."
+          else
+            notes="Unofficial NanoPi R2S minimal kernel ${tag}. Pacman repo: https://therealcoder1337.github.io/nanopi-r2s-kernel-arch/aarch64. Source package and merged config are included."
           fi
 
           if gh release view --repo "$repo" "$tag" >/dev/null 2>&1; then
             gh release upload --repo "$repo" "$tag" \
               "${assets[@]}" \
               --clobber
+            gh release edit --repo "$repo" "$tag" \
+              --title "$title" \
+              --notes "$notes"
           else
             gh release create --repo "$repo" "$tag" \
               "${assets[@]}" \
               --target "$sha" \
               "${release_flags[@]}" \
-              --title "${{ steps.publish_names.outputs.release_title }}" \
-              --notes "Unofficial NanoPi R2S minimal kernel ${tag}. Pacman repo: ${{ steps.publish_names.outputs.pages_branch }}/aarch64. Source package and merged config are included."
+              --title "$title" \
+              --notes "$notes"
           fi
-
-      - name: Deploy pacman repo to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./repo/aarch64
-          publish_branch: ${{ steps.publish_names.outputs.pages_branch }}
-          destination_dir: aarch64
-          keep_files: false
-          user_name: therealcoder1337
-          user_email: 78889972+therealcoder1337@users.noreply.github.com
