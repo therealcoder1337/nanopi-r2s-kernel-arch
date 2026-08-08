@@ -47,12 +47,20 @@ CONFIG_USB_STORAGE=y
 CONFIG_USB_UAS=y
 
 # ---------------------------------------------------------------------------
-# MMC and block storage
+# MMC, block storage, and optional compressed swap
 # ---------------------------------------------------------------------------
 CONFIG_MMC=y
 CONFIG_MMC_BLOCK=y
 CONFIG_MMC_DW=y
 CONFIG_MMC_DW_ROCKCHIP=y
+# Ship zram as an opt-in module; userspace remains responsible for configuring it.
+CONFIG_SWAP=y
+CONFIG_ZRAM=m
+CONFIG_ZSMALLOC=m
+CONFIG_ZRAM_BACKEND_LZO=y
+CONFIG_ZRAM_DEF_COMP_LZORLE=y
+CONFIG_LZO_COMPRESS=m
+CONFIG_LZO_DECOMPRESS=m
 
 # ---------------------------------------------------------------------------
 # Thermal, hwmon, and RTC

@@ -102,7 +102,7 @@ Builds start from the current ALARM `linux-aarch64` config and apply two fragmen
 | [config/fragment.r2s](config/fragment.r2s) | R2S board and router features to keep |
 | [config/fragment.prune](config/fragment.prune) | Subsystems not needed for this headless router target |
 
-The profile keeps the R2S boot and routing path: RK3328, RK I2C PMIC/regulators, Rockchip MMC/eMMC, USB2/USB3 host, USB storage/UAS, onboard GMAC, internal USB3 RTL8153, nftables/iptables compatibility, broad VPN/tunnel/ipset support, WireGuard, IPv6, AES-based dm-crypt/LUKS, Cubic/BBR, Landlock, 32-bit userspace compatibility, ext4/overlayfs/exfat/FUSE, thermal/cpufreq, GPIO LEDs, and the reset button.
+The profile keeps the R2S boot and routing path: RK3328, RK I2C PMIC/regulators, Rockchip MMC/eMMC, USB2/USB3 host, USB storage/UAS, onboard GMAC, internal USB3 RTL8153, nftables/iptables compatibility, broad VPN/tunnel/ipset support, WireGuard, IPv6, AES-based dm-crypt/LUKS, optional zram swap, Cubic/BBR, Landlock, 32-bit userspace compatibility, ext4/overlayfs/exfat/FUSE, thermal/cpufreq, GPIO LEDs, and the reset button.
 
 The internal RTL8153 driver is built as a module so it loads after the root filesystem is available and can read `rtl_nic/rtl8153b-2.fw` from `linux-firmware-realtek`. A built-in driver works for networking, but misses that firmware unless the firmware is added to the initramfs or built into the kernel. Those remain possible later options, but they add image/build complexity and extra firmware redistribution surface.
 
