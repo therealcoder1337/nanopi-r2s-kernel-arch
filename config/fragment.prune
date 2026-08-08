@@ -1001,9 +1001,11 @@ CONFIG_GENEVE=n
 CONFIG_NET_FOU=n
 CONFIG_NET_FOU_IP_TUNNELS=n
 
-# Keep modern XFRM netlink; drop deprecated PF_KEY and MIPv6/developer extras.
+# Keep modern XFRM netlink; drop deprecated PF_KEY, LSM-labelled IPsec hooks,
+# and MIPv6/developer extras. Landlock and Yama do not use the XFRM LSM hooks.
 CONFIG_NET_KEY=n
 CONFIG_NET_KEY_MIGRATE=n
+CONFIG_SECURITY_NETWORK_XFRM=n
 CONFIG_XFRM_SUB_POLICY=n
 CONFIG_XFRM_MIGRATE=n
 CONFIG_XFRM_STATISTICS=n
@@ -1344,6 +1346,9 @@ CONFIG_SERIO_ARC_PS2=n
 CONFIG_N_HDLC=n
 CONFIG_N_GSM=n
 CONFIG_SERIAL_ARC=n
+# RK3328 has no supported hardware RNG; the Rockchip driver only matches newer
+# SoCs. This does not remove the kernel random number generator or /dev/urandom.
+CONFIG_HW_RANDOM=n
 CONFIG_HW_RANDOM_ARM_SMCCC_TRNG=n
 CONFIG_HW_RANDOM_TIMERIOMEM=n
 CONFIG_USB_WDM=n
@@ -1567,6 +1572,8 @@ CONFIG_USB_STORAGE_CYPRESS_ATACB=n
 CONFIG_USB_STORAGE_ENE_UB6250=n
 
 # MMC/SD: keep the DW Rockchip host plus block support for SD and R2S Plus eMMC.
+# Neither shipped device tree uses an MMC power-sequence helper.
+CONFIG_PWRSEQ_EMMC=n
 CONFIG_PWRSEQ_SIMPLE=n
 CONFIG_SDIO_UART=n
 CONFIG_MMC_ARMMMCI=n
