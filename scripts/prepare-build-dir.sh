@@ -32,14 +32,22 @@ pkgver="${pkgver:?}"
 pkgrel="${pkgrel:?}"
 _srcname="${_srcname:?}"
 
-echo "==> Downloading kernel ${_srcname} and patch-${pkgver}..."
 kernel_major="${pkgver%%.*}"
-for artifact in "${_srcname}.tar.xz" "patch-${pkgver}.xz"; do
+base_version="${_srcname#linux-}"
+artifacts=("${_srcname}.tar.xz")
+if [ "$pkgver" != "$base_version" ]; then
+    artifacts+=("patch-${pkgver}.xz")
+fi
+
+echo "==> Downloading kernel sources for ${pkgver}..."
+for artifact in "${artifacts[@]}"; do
     [ -f "$artifact" ] || curl -fsSL -O "https://www.kernel.org/pub/linux/kernel/v${kernel_major}.x/$artifact"
 done
 rm -rf "${_srcname}"
 tar -xf "${_srcname}.tar.xz"
-patch --quiet -d "${_srcname}" -p1 < <(xz -dc "patch-${pkgver}.xz")
+if [ "$pkgver" != "$base_version" ]; then
+    patch --quiet -d "${_srcname}" -p1 < <(xz -dc "patch-${pkgver}.xz")
+fi
 
 echo "==> Merging kernel config against ${pkgver}..."
 "$ROOT/scripts/merge-config.sh" "$BUILD/$_srcname" "$BUILD/config.merged" "$ALARM_CONFIG"

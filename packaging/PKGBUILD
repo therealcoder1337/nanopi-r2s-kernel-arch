@@ -25,14 +25,18 @@ makedepends=(
 # Sources filled by scripts/prepare-build-dir.sh (CI / local build)
 source=(
     "${_srcname}.tar.xz"
-    "patch-${pkgver}.xz"
     'config.merged'
     'linux-nanopi-r2s-minimal.preset'
     'mkinitcpio.linux-nanopi-r2s-minimal.conf'
     'r8152-led-config-from-of.patch'
     'rk3328-nanopi-r2s-r8153-led-data.patch'
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+if [[ $pkgver != ${_srcname#linux-} ]]; then
+    source+=("patch-${pkgver}.xz")
+    sha256sums+=('SKIP')
+fi
 
 export ARCH=arm64
 export CROSS_COMPILE="${CROSS_COMPILE:-aarch64-linux-gnu-}"
@@ -48,7 +52,9 @@ prepare() {
     echo "-${pkgrel}" > localversion.10-pkgrel
     echo "-nanopi-r2s-minimal" > localversion.20-pkgname
 
-    patch -p1 -N < "../patch-${pkgver}"
+    if [[ $pkgver != ${_srcname#linux-} ]]; then
+        patch -p1 -N < "../patch-${pkgver}"
+    fi
     patch -p1 -N < "${srcdir}/r8152-led-config-from-of.patch"
     patch -p1 -N < "${srcdir}/rk3328-nanopi-r2s-r8153-led-data.patch"
 
