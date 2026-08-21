@@ -41,7 +41,13 @@ fi
 
 echo "==> Downloading kernel sources for ${pkgver}..."
 for artifact in "${artifacts[@]}"; do
-    [ -f "$artifact" ] || curl -fsSL -O "https://www.kernel.org/pub/linux/kernel/v${kernel_major}.x/$artifact"
+    if [ ! -f "$artifact" ]; then
+        partial="${artifact}.part"
+        curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 \
+            -o "$partial" \
+            "https://www.kernel.org/pub/linux/kernel/v${kernel_major}.x/$artifact"
+        mv "$partial" "$artifact"
+    fi
 done
 rm -rf "${_srcname}"
 tar -xf "${_srcname}.tar.xz"
