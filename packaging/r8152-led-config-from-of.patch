@@ -15,7 +15,7 @@ Adapted for the ALARM r8152 driver in this package.
 diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
 --- a/drivers/net/usb/r8152.c
 +++ b/drivers/net/usb/r8152.c
-@@ -11,6 +11,7 @@
+@@ -13,6 +13,7 @@
  #include <linux/hex.h>
  #include <linux/phy.h>
  #include <linux/usb.h>
@@ -23,8 +23,8 @@ diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
  #include <linux/crc32.h>
  #include <linux/if_vlan.h>
  #include <linux/uaccess.h>
-@@ -7185,6 +7186,19 @@ static void rtl_tally_reset(struct r8152 *tp)
-	ocp_word_set_bits(tp, MCU_TYPE_PLA, PLA_RSTTALLY, TALLY_RESET);
+@@ -7209,6 +7210,19 @@ static void rtl_tally_reset(struct r8152 *tp)
+ 	ocp_word_set_bits(tp, MCU_TYPE_PLA, PLA_RSTTALLY, TALLY_RESET);
  }
  
 +static void r8152_led_configuration(struct r8152 *tp)
@@ -43,26 +43,28 @@ diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
  static void r8152b_init(struct r8152 *tp)
  {
  	u32 ocp_data;
-@@ -7219,5 +7233,7 @@ static void r8152b_init(struct r8152 *tp)
-	ocp_word_clr_bits(tp, MCU_TYPE_USB, USB_USB_CTRL,
-			  RX_AGG_DISABLE | RX_ZERO_EN);
+@@ -7241,6 +7255,8 @@ static void r8152b_init(struct r8152 *tp)
+ 	/* enable rx aggregation */
+ 	ocp_word_clr_bits(tp, MCU_TYPE_USB, USB_USB_CTRL,
+ 			  RX_AGG_DISABLE | RX_ZERO_EN);
 +
 +	r8152_led_configuration(tp);
  }
  
  static void r8153_init(struct r8152 *tp)
-@@ -7335,7 +7351,9 @@ static void r8153_init(struct r8152 *tp)
- 	default:
+@@ -7358,6 +7374,8 @@
  		tp->coalesce = COALESCE_SLOW;
  		break;
  	}
 +
 +	r8152_led_configuration(tp);
  }
-
+ 
  static void r8153b_init(struct r8152 *tp)
-@@ -7406,4 +7424,6 @@ static void r8153b_init(struct r8152 *tp)
-	tp->coalesce = 15000;	/* 15 us */
+@@ -7428,6 +7446,8 @@
+ 	rtl_tally_reset(tp);
+ 
+ 	tp->coalesce = 15000;	/* 15 us */
 +
 +	r8152_led_configuration(tp);
  }
